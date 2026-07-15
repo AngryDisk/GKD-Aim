@@ -23,6 +23,7 @@ data class SettingsStore(
     val httpServerPort: Int = 8888,
     val updateSubsInterval: Long = UpdateTimeOption.Everyday.value,
     val captureVolumeChange: Boolean = false,
+    val enableAiRuleGeneration: Boolean = false,
     val toastWhenClick: Boolean = true,
     val actionToast: String = META.appName,
     val autoClearMemorySubs: Boolean = false,

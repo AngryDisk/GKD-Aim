@@ -42,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -67,6 +68,7 @@ import li.songe.gkd.service.ScreenshotService
 import li.songe.gkd.shizuku.shizukuContextFlow
 import li.songe.gkd.shizuku.updateBinderMutex
 import li.songe.gkd.store.storeFlow
+import li.songe.gkd.store.deepSeekApiKeyFlow
 import li.songe.gkd.ui.component.AuthCard
 import li.songe.gkd.ui.component.CustomOutlinedTextField
 import li.songe.gkd.ui.component.PerfCustomIconButton
@@ -99,6 +101,7 @@ fun AdvancedPage() {
     val mainVm = LocalMainViewModel.current
     val vm = viewModel<AdvancedVm>()
     val store by storeFlow.collectAsState()
+    val deepSeekApiKey by deepSeekApiKeyFlow.collectAsState()
 
     var showEditPortDlg by vm.showEditPortDlgFlow.asMutableState()
     if (showEditPortDlg) {
@@ -286,6 +289,55 @@ fun AdvancedPage() {
                     )
                 }
             })
+    }
+
+    var showAiRuleConfigDlg by vm.showAiRuleConfigDlgFlow.asMutableState()
+    if (showAiRuleConfigDlg) {
+        var apiKeyValue by remember { mutableStateOf(deepSeekApiKey) }
+        AlertDialog(
+            properties = DialogProperties(dismissOnClickOutside = false),
+            title = { Text(text = "DeepSeek AI 规则") },
+            text = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "开启后，点击悬浮快照按钮会把当前应用的可见无障碍节点信息发送给 DeepSeek；截图不会上传。API Key 仅保存在私有配置中，不随 GKD 备份或诊断日志导出。",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        label = { Text("API Key") },
+                        value = apiKeyValue,
+                        placeholder = { Text("请输入 DeepSeek API Key") },
+                        onValueChange = {
+                            apiKeyValue = it.filterNot { char -> char == '\n' || char == '\r' }
+                        },
+                        visualTransformation = PasswordVisualTransformation(),
+                        singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .autoFocus(),
+                    )
+                }
+            },
+            onDismissRequest = { showAiRuleConfigDlg = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    val newValue = apiKeyValue.trim()
+                    deepSeekApiKeyFlow.value = newValue
+                    storeFlow.update { it.copy(enableAiRuleGeneration = newValue.isNotEmpty()) }
+                    showAiRuleConfigDlg = false
+                    toast(if (newValue.isEmpty()) "已清除 API Key 并关闭 AI 规则生成" else "已保存并开启 AI 规则生成")
+                }) {
+                    Text(text = "保存")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAiRuleConfigDlg = false }) {
+                    Text(text = "取消")
+                }
+            },
+        )
     }
     var showHttpSettingDlg by rememberSaveable { mutableStateOf(false) }
 
@@ -510,6 +562,35 @@ fun AdvancedPage() {
                         ButtonService.start()
                     } else {
                         ButtonService.stop()
+                    }
+                },
+            )
+
+            TextSwitch(
+                title = "AI 规则生成",
+                subtitle = if (deepSeekApiKey.isEmpty()) {
+                    "配置 DeepSeek API Key 后可用"
+                } else {
+                    "点击快照按钮时生成规则并保存到本地订阅"
+                },
+                checked = store.enableAiRuleGeneration,
+                suffixIcon = {
+                    PerfCustomIconButton(
+                        size = 32.dp,
+                        iconSize = 20.dp,
+                        onClickLabel = "编辑 DeepSeek API Key",
+                        onClick = { showAiRuleConfigDlg = true },
+                        id = R.drawable.ic_page_info,
+                        contentDescription = "DeepSeek AI 规则设置",
+                    )
+                },
+                onCheckedChange = {
+                    if (it && deepSeekApiKeyFlow.value.isEmpty()) {
+                        showAiRuleConfigDlg = true
+                    } else {
+                        storeFlow.update { settings ->
+                            settings.copy(enableAiRuleGeneration = it)
+                        }
                     }
                 },
             )

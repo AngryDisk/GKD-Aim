@@ -4,15 +4,19 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.MutableStateFlow
 import li.songe.gkd.appScope
+import li.songe.gkd.ai.DeepSeekRuleGenerator
 import li.songe.gkd.notif.StopServiceReceiver
 import li.songe.gkd.notif.buttonNotif
 import li.songe.gkd.permission.canDrawOverlaysState
 import li.songe.gkd.ui.component.PerfIcon
+import li.songe.gkd.store.storeFlow
 import li.songe.gkd.util.SnapshotExt
 import li.songe.gkd.util.launchTry
 import li.songe.gkd.util.startForegroundServiceByClass
@@ -22,7 +26,11 @@ class ButtonService : OverlayWindowService(
     positionKey = "button"
 ) {
     override fun onClickView() = appScope.launchTry {
-        SnapshotExt.captureSnapshot()
+        if (storeFlow.value.enableAiRuleGeneration) {
+            DeepSeekRuleGenerator.captureAndGenerate()
+        } else {
+            SnapshotExt.captureSnapshot()
+        }
     }.let { }
 
     override fun onLongClickView() = stopSelf()
@@ -30,8 +38,13 @@ class ButtonService : OverlayWindowService(
     @Composable
     override fun ComposeContent() {
         val alpha = 0.75f
+        val store by storeFlow.collectAsState()
         PerfIcon(
-            imageVector = PerfIcon.CenterFocusWeak,
+            imageVector = if (store.enableAiRuleGeneration) {
+                PerfIcon.AutoMode
+            } else {
+                PerfIcon.CenterFocusWeak
+            },
             modifier = Modifier
                 .clip(MaterialTheme.shapes.small)
                 .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = alpha))
