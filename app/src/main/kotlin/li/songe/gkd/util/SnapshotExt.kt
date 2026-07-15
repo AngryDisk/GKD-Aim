@@ -56,6 +56,21 @@ object SnapshotExt {
         }
     }
 
+    suspend fun getSnapshot(id: Long): ComplexSnapshot {
+        val file = snapshotFile(id)
+        if (!file.exists()) {
+            throw RpcError("快照不存在或已被删除")
+        }
+        val text = withContext(Dispatchers.IO) {
+            runCatching { file.readText() }
+                .getOrElse { throw RpcError("快照读取失败：${it.message}") }
+        }
+        return withContext(Dispatchers.Default) {
+            runCatching { keepNullJson.decodeFromString<ComplexSnapshot>(text) }
+                .getOrElse { throw RpcError("快照数据无法解析") }
+        }
+    }
+
     fun screenshotFile(id: Long) = snapshotParentPath(id).resolve("${id}.png")
 
     suspend fun snapshotZipFile(

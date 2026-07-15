@@ -291,16 +291,16 @@ fun AdvancedPage() {
             })
     }
 
-    var showAiRuleConfigDlg by vm.showAiRuleConfigDlgFlow.asMutableState()
-    if (showAiRuleConfigDlg) {
+    var showDeepSeekApiKeyDlg by vm.showDeepSeekApiKeyDlgFlow.asMutableState()
+    if (showDeepSeekApiKeyDlg) {
         var apiKeyValue by remember { mutableStateOf(deepSeekApiKey) }
         AlertDialog(
             properties = DialogProperties(dismissOnClickOutside = false),
-            title = { Text(text = "DeepSeek AI 规则") },
+            title = { Text(text = "DeepSeek API Key") },
             text = {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = "开启后，点击悬浮快照按钮会把当前应用的可见无障碍节点信息发送给 DeepSeek；截图不会上传。API Key 仅保存在私有配置中，不随 GKD 备份或诊断日志导出。",
+                        text = "API Key 仅保存在私有配置中，不随 GKD 备份或诊断日志导出。清除 API Key 会同时关闭 AI 规则生成。",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -320,20 +320,23 @@ fun AdvancedPage() {
                     )
                 }
             },
-            onDismissRequest = { showAiRuleConfigDlg = false },
+            onDismissRequest = { showDeepSeekApiKeyDlg = false },
             confirmButton = {
                 TextButton(onClick = {
                     val newValue = apiKeyValue.trim()
+                    val hadApiKey = deepSeekApiKey.isNotBlank()
                     deepSeekApiKeyFlow.value = newValue
-                    storeFlow.update { it.copy(enableAiRuleGeneration = newValue.isNotEmpty()) }
-                    showAiRuleConfigDlg = false
-                    toast(if (newValue.isEmpty()) "已清除 API Key 并关闭 AI 规则生成" else "已保存并开启 AI 规则生成")
+                    if (newValue.isEmpty() || !hadApiKey) {
+                        storeFlow.update { it.copy(enableAiRuleGeneration = false) }
+                    }
+                    showDeepSeekApiKeyDlg = false
+                    toast(if (newValue.isEmpty()) "已清除 API Key 并关闭 AI 规则生成" else "API Key 已保存")
                 }) {
                     Text(text = "保存")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showAiRuleConfigDlg = false }) {
+                TextButton(onClick = { showDeepSeekApiKeyDlg = false }) {
                     Text(text = "取消")
                 }
             },
@@ -566,32 +569,41 @@ fun AdvancedPage() {
                 },
             )
 
+            SettingItem(
+                title = "DeepSeek API Key",
+                subtitle = if (deepSeekApiKey.isEmpty()) {
+                    "未配置"
+                } else {
+                    "已配置，仅保存在私有配置中"
+                },
+                imageVector = PerfIcon.Edit,
+                onClickLabel = "编辑 DeepSeek API Key",
+                onClick = { showDeepSeekApiKeyDlg = true },
+            )
+
+            val aiRuleGenerationAvailable = deepSeekApiKey.isNotBlank()
             TextSwitch(
                 title = "AI 规则生成",
-                subtitle = if (deepSeekApiKey.isEmpty()) {
-                    "配置 DeepSeek API Key 后可用"
-                } else {
+                subtitle = if (aiRuleGenerationAvailable) {
                     "点击快照按钮时生成规则并保存到本地订阅"
+                } else {
+                    "填写 DeepSeek API Key 后可用"
                 },
-                checked = store.enableAiRuleGeneration,
-                suffixIcon = {
-                    PerfCustomIconButton(
-                        size = 32.dp,
-                        iconSize = 20.dp,
-                        onClickLabel = "编辑 DeepSeek API Key",
-                        onClick = { showAiRuleConfigDlg = true },
-                        id = R.drawable.ic_page_info,
-                        contentDescription = "DeepSeek AI 规则设置",
-                    )
-                },
+                checked = aiRuleGenerationAvailable && store.enableAiRuleGeneration,
+                enabled = aiRuleGenerationAvailable,
                 onCheckedChange = {
-                    if (it && deepSeekApiKeyFlow.value.isEmpty()) {
-                        showAiRuleConfigDlg = true
-                    } else {
+                    storeFlow.update { settings ->
+                        settings.copy(enableAiRuleGeneration = it && deepSeekApiKeyFlow.value.isNotBlank())
+                    }
+                },
+                onClick = if (aiRuleGenerationAvailable) {
+                    {
                         storeFlow.update { settings ->
-                            settings.copy(enableAiRuleGeneration = it)
+                            settings.copy(enableAiRuleGeneration = !settings.enableAiRuleGeneration)
                         }
                     }
+                } else {
+                    null
                 },
             )
 

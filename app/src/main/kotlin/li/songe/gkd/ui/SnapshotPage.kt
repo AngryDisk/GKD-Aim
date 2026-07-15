@@ -13,15 +13,19 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
@@ -44,10 +48,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import li.songe.gkd.MainActivity
+import li.songe.gkd.ai.DeepSeekRuleGenerator
 import li.songe.gkd.data.Snapshot
 import li.songe.gkd.db.DbSet
 import li.songe.gkd.permission.canWriteExternalStorage
 import li.songe.gkd.permission.requiredPermission
+import li.songe.gkd.store.deepSeekApiKeyFlow
 import li.songe.gkd.ui.component.EmptyText
 import li.songe.gkd.ui.component.FixedTimeText
 import li.songe.gkd.ui.component.LocalNumberCharWidth
@@ -89,7 +95,9 @@ fun SnapshotPage() {
 
     val firstLoading by vm.firstLoadingFlow.collectAsState()
     val snapshots by vm.snapshotsState.collectAsState()
+    val deepSeekApiKey by deepSeekApiKeyFlow.collectAsState()
     var selectedSnapshot by remember { mutableStateOf<Snapshot?>(null) }
+    var aiDescriptionSnapshot by remember { mutableStateOf<Snapshot?>(null) }
     val resetKey = rememberSaveable { mutableIntStateOf(0) }
     val (scrollBehavior, listState) = useListScrollState(
         resetKey,
@@ -181,6 +189,24 @@ fun SnapshotPage() {
                             )
                         }))
                         .then(modifier)
+                )
+                HorizontalDivider()
+                Text(
+                    text = "补充描述+ai规则生成",
+                    modifier = Modifier
+                        .clickable(
+                            enabled = deepSeekApiKey.isNotBlank(),
+                            onClick = throttle {
+                                selectedSnapshot = null
+                                aiDescriptionSnapshot = snapshotVal
+                            },
+                        )
+                        .then(modifier),
+                    color = if (deepSeekApiKey.isNotBlank()) {
+                        colorScheme.onSurface
+                    } else {
+                        colorScheme.onSurface.copy(alpha = 0.38f)
+                    },
                 )
                 HorizontalDivider()
                 Text(
@@ -298,6 +324,74 @@ fun SnapshotPage() {
                 )
             }
         }
+    }
+
+    aiDescriptionSnapshot?.let { snapshotVal ->
+        var description by remember(snapshotVal.id) { mutableStateOf("") }
+        var generating by remember(snapshotVal.id) { mutableStateOf(false) }
+        val generateRule = vm.viewModelScope.launchAsFn {
+            generating = true
+            try {
+                DeepSeekRuleGenerator.generateFromSnapshot(snapshotVal.id, description)
+                aiDescriptionSnapshot = null
+            } finally {
+                generating = false
+            }
+        }
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = {
+                if (!generating) aiDescriptionSnapshot = null
+            },
+            title = { Text("补充描述+ai规则生成") },
+            text = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "描述广告关闭或跳过按钮的位置、文字或外观，帮助 AI 从这条快照中定位目标。截图不会上传。",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = description,
+                        onValueChange = {
+                            description = it.take(DeepSeekRuleGenerator.MAX_USER_DESCRIPTION_LENGTH)
+                        },
+                        enabled = !generating,
+                        label = { Text("补充描述") },
+                        placeholder = { Text("例如：右上角圆形叉号是广告关闭按钮") },
+                        supportingText = {
+                            Text("${description.length}/${DeepSeekRuleGenerator.MAX_USER_DESCRIPTION_LENGTH}")
+                        },
+                        minLines = 3,
+                        maxLines = 6,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = deepSeekApiKey.isNotBlank() && description.isNotBlank() && !generating,
+                    onClick = generateRule,
+                ) {
+                    if (generating) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+                    Text("生成规则")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    enabled = !generating,
+                    onClick = { aiDescriptionSnapshot = null },
+                ) {
+                    Text("取消")
+                }
+            },
+        )
     }
 }
 
