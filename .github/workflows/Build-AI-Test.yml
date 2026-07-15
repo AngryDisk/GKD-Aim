@@ -49,7 +49,6 @@ jobs:
       - uses: actions/upload-artifact@v7
         with:
           name: gkd-ai-test-${{ github.ref_name }}
-          archive: false
           path: release
 
       - name: Publish GitHub prerelease
