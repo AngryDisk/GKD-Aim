@@ -1,0 +1,74 @@
+name: Build-AI-Test
+
+on:
+  workflow_dispatch:
+
+  push:
+    tags:
+      - 'ai-test-*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v5
+
+      - run: chmod 755 ./gradlew
+
+      - name: Run AI rule tests
+        run: ./gradlew app:testGkdDebugUnitTest --tests 'li.songe.gkd.ai.*'
+
+      - name: Build independently installable test APK
+        run: ./gradlew app:assembleGkdDebug
+
+      - name: Prepare test package
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk="$(find app/build/outputs/apk/gkd/debug -maxdepth 1 -name '*.apk' -print -quit)"
+          test -n "$apk"
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            package_version="$GITHUB_REF_NAME"
+          else
+            package_version="${GITHUB_SHA::7}"
+          fi
+          mkdir -p release
+          cp "$apk" "release/gkd-${package_version}.apk"
+          sha256sum release/*.apk > release/SHA256SUMS.txt
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: gkd-ai-test-${{ github.ref_name }}
+          archive: false
+          path: release
+
+      - name: Publish GitHub prerelease
+        if: startsWith(github.ref, 'refs/tags/ai-test-')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          cat > release-notes.md <<'EOF'
+          AI-enhanced GKD test build.
+
+          - Built from the `codex/ai-rule-generation` development branch.
+          - Uses the `gkdDebug` variant and the separate `li.songe.gkd.debug` application ID, so it can coexist with the official app.
+          - Signed with the GitHub runner's test/debug key. It is not an official GKD release.
+          - DeepSeek API keys are configured on-device and are not included in the APK or repository.
+          EOF
+          gh release create "$GITHUB_REF_NAME" release/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "GKD AI Test $GITHUB_REF_NAME" \
+            --notes-file release-notes.md \
+            --prerelease \
+            --verify-tag
