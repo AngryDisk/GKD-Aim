@@ -24,6 +24,7 @@
 - 截图不会发送给 DeepSeek，但无障碍节点中的文字仍可能包含隐私信息。
 - API Key 存放在现有 `private-store` 中，不包含在 GKD 的普通备份和诊断日志导出内。
 - 当前使用 DeepSeek 官方 `https://api.deepseek.com/chat/completions` 接口和 `deepseek-v4-flash` 模型。
+- 请求会显式关闭 V4 默认的思考模式，避免短 JSON 答案的输出额度先被思考内容耗尽；服务端偶发返回空内容时会自动重试一次。
 
 ## 已知限制
 

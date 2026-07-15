@@ -51,6 +51,32 @@ class DeepSeekRuleGeneratorTest {
         assertTrue(prompt.contains("\"appId\":\"com.example.ad\""))
     }
 
+    @Test
+    fun readsFinishReasonWhenThinkingConsumesTheAnswerBudget() {
+        val completion = DeepSeekRuleGenerator.decodeCompletionContent(
+            """
+            {
+              "choices": [{
+                "finish_reason": "length",
+                "message": {"content": "", "reasoning_content": "still thinking"}
+              }]
+            }
+            """.trimIndent()
+        )
+
+        assertEquals("", completion.content)
+        assertEquals("length", completion.finishReason)
+        assertTrue(completion.hasReasoningContent)
+    }
+
+    @Test
+    fun retryPromptExplicitlyRequestsACompleteJsonLine() {
+        val prompt = DeepSeekRuleGenerator.buildUserPrompt(testSnapshot(), null, retry = true)
+
+        assertTrue(prompt.contains("空响应后的重试"))
+        assertTrue(prompt.contains("一行完整 JSON"))
+    }
+
     private fun testSnapshot() = ComplexSnapshot(
         id = 123L,
         appId = "com.example.ad",

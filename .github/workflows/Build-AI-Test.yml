@@ -64,6 +64,7 @@ jobs:
           - Separates the on-device DeepSeek API Key from the AI rule-generation switch.
           - Adds `补充描述+ai规则生成` to saved snapshots so a user description can guide target selection.
           - Disables both AI generation entry points until an API Key is configured.
+          - Fixes empty DeepSeek V4 results by disabling thinking mode for the short JSON decision and retrying an occasional blank response once.
           - Uses the `gkdDebug` variant and the separate `li.songe.gkd.debug` application ID, so it can coexist with the official app.
           - Signed with the GitHub runner's test/debug key. It is not an official GKD release.
           - DeepSeek API keys are configured on-device and are not included in the APK or repository.
