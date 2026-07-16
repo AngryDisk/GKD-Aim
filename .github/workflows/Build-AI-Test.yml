@@ -1,4 +1,4 @@
-name: Build-AI-Test
+name: Build-GKD-Aim-Test
 
 on:
   workflow_dispatch:
@@ -43,12 +43,12 @@ jobs:
             package_version="${GITHUB_SHA::7}"
           fi
           mkdir -p release
-          cp "$apk" "release/gkd-${package_version}.apk"
+          cp "$apk" "release/gkd-aim-${package_version}.apk"
           sha256sum release/*.apk > release/SHA256SUMS.txt
 
       - uses: actions/upload-artifact@v7
         with:
-          name: gkd-ai-test-${{ github.ref_name }}
+          name: gkd-aim-test-${{ github.ref_name }}
           path: release
 
       - name: Publish GitHub prerelease
@@ -58,9 +58,9 @@ jobs:
         shell: bash
         run: |
           cat > release-notes.md <<'EOF'
-          AI-enhanced GKD test build.
+          GKD-Aim test build. This is an unofficial modified version of GKD.
 
-          - Built from the `codex/ai-rule-generation` development branch.
+          - Built from the AngryDisk/GKD-Aim repository.
           - Separates the on-device DeepSeek API Key from the AI rule-generation switch.
           - Adds `补充描述+ai规则生成` to saved snapshots so a user description can guide target selection.
           - Disables both AI generation entry points until an API Key is configured.
@@ -71,7 +71,7 @@ jobs:
           EOF
           gh release create "$GITHUB_REF_NAME" release/* \
             --repo "$GITHUB_REPOSITORY" \
-            --title "GKD AI Test $GITHUB_REF_NAME" \
+            --title "GKD-Aim Test $GITHUB_REF_NAME" \
             --notes-file release-notes.md \
             --prerelease \
             --verify-tag

@@ -57,7 +57,6 @@ import li.songe.gkd.ui.ActionLogRoute
 import li.songe.gkd.ui.ActivityLogRoute
 import li.songe.gkd.ui.AppConfigRoute
 import li.songe.gkd.ui.AuthA11yRoute
-import li.songe.gkd.ui.WebViewRoute
 import li.songe.gkd.ui.component.GroupNameText
 import li.songe.gkd.ui.component.PerfIcon
 import li.songe.gkd.ui.component.PerfIconButton
@@ -244,12 +243,12 @@ fun useControlPage(): ScaffoldExt {
             }
 
             PageItemCard(
-                title = "了解 GKD",
-                subtitle = "查阅规则文档和常见问题",
+                title = "了解 GKD-Aim",
+                subtitle = "查看本修改版说明和常见问题",
                 imageVector = PerfIcon.HelpOutline,
-                onClickLabel = "打开 GKD 文档页面",
+                onClickLabel = "打开 GKD-Aim 项目页面",
                 onClick = {
-                    mainVm.navigatePage(WebViewRoute(initUrl = HOME_PAGE_URL))
+                    mainVm.openUrl(HOME_PAGE_URL)
                 })
             Spacer(modifier = Modifier.height(EmptyHeight))
         }

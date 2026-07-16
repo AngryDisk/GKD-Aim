@@ -39,6 +39,7 @@ import li.songe.gkd.store.initStore
 import li.songe.gkd.util.AndroidTarget
 import li.songe.gkd.util.LogUtils
 import li.songe.gkd.util.PKG_FLAGS
+import li.songe.gkd.util.REPOSITORY_URL
 import li.songe.gkd.util.deviceInfoDesc
 import li.songe.gkd.util.initAppState
 import li.songe.gkd.util.initSubsState
@@ -81,11 +82,12 @@ data class AppMeta(
     val appId: String = app.packageName!!,
     val appName: String = app.getString(R.string.app_name)
 ) {
-    val commitUrl = "https://github.com/gkd-kit/gkd/".run {
+    val commitUrl = "$REPOSITORY_URL/".run {
         plus(if (tagName != null) "tree/$tagName" else "commit/$commitId")
     }
     val isGkdChannel get() = channel == "gkd"
-    val updateEnabled get() = isGkdChannel
+    // GKD-Aim does not reuse the official GKD update feed. Users update from this fork's Releases.
+    val updateEnabled get() = false
     val isBeta get() = versionName.contains("beta")
 }
 

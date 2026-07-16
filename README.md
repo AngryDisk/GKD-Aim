@@ -2,11 +2,16 @@
 
 gkd ai improved 项目，使用 ai增强了部分功能。
 
+> [!IMPORTANT]
+> GKD-Aim 是基于 GKD 的非官方修改版，不属于 gkd-kit 官方项目。使用问题、功能建议和崩溃反馈请提交到 [GKD-Aim Issues](https://github.com/AngryDisk/GKD-Aim/issues)，请勿向 GKD 官方项目反馈本修改版的问题。此标识与链接调整遵循 [gkd-kit 关于第三方修改版的说明](https://github.com/orgs/gkd-kit/discussions/679)。
+
 和 <https://github.com/fjjzy/gkd> 这个项目有点像，但是处理思路不一样。
 
 如果需要gkd原始说明，请参考 README_origin.md
 
 本文只说明相比原始的gkd，gkd-aim做了什么变动。
+
+最新测试版本请前往 [GKD-Aim Releases](https://github.com/AngryDisk/GKD-Aim/releases) 下载。应用内“检查更新”也会直接打开此页面。
 
 ## 项目来源
 

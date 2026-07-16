@@ -73,7 +73,8 @@ import li.songe.gkd.ui.style.EmptyHeight
 import li.songe.gkd.ui.style.itemPadding
 import li.songe.gkd.ui.style.titleItemPadding
 import li.songe.gkd.util.ISSUES_URL
-import li.songe.gkd.util.PLAY_STORE_URL
+import li.songe.gkd.util.LATEST_RELEASE_URL
+import li.songe.gkd.util.RELEASES_URL
 import li.songe.gkd.util.REPOSITORY_URL
 import li.songe.gkd.util.ShortUrlSet
 import li.songe.gkd.util.UpdateChannelOption
@@ -158,7 +159,7 @@ fun AboutPage() {
                         },
                     )
                 },
-                title = { Text(text = "关于") },
+                title = { Text(text = "关于 GKD-Aim") },
                 actions = {
                     PerfIconButton(
                         imageVector = PerfIcon.Share,
@@ -199,6 +200,11 @@ fun AboutPage() {
                 ) {
                     Text(text = META.appName, style = MaterialTheme.typography.titleMedium)
                     Text(
+                        text = "非官方 GKD 修改版",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    Text(
                         text = META.versionName,
                         style = MaterialTheme.typography.bodyMedium,
                     )
@@ -208,9 +214,16 @@ fun AboutPage() {
 
             SettingItem(
                 imageVector = null,
-                title = "开源代码",
+                title = "GKD-Aim 开源代码",
                 onClick = {
                     mainVm.openUrl(REPOSITORY_URL)
+                },
+            )
+            SettingItem(
+                imageVector = null,
+                title = "检查更新",
+                onClick = {
+                    mainVm.openUrl(LATEST_RELEASE_URL)
                 },
             )
             if (META.isGkdChannel) {
@@ -256,12 +269,12 @@ fun AboutPage() {
                                     )
                                     append("感谢您愿意花时间反馈，")
                                     withStyle(style = highlightStyle) {
-                                        append("GKD 默认不携带任何规则，只接受应用本体功能相关的反馈")
+                                        append("GKD-Aim 默认不携带任何规则，只接受本修改版应用功能相关的反馈")
                                     }
                                     append("\n\n")
                                     append("请先判断是不是第三方规则订阅的问题，如果是，您应该向规则提供者反馈，而不是在此处反馈。")
                                     withStyle(style = highlightStyle) {
-                                        append("如果您已经确信是 GKD 应用本体的问题")
+                                        append("如果您已经确信是 GKD-Aim 应用本体的问题")
                                     }
                                     append("，可点击下方继续反馈")
                                 })
@@ -357,8 +370,8 @@ fun AboutPage() {
                     }
                     context.saveFileToDownloads(getShareApkFile())
                 },
-                "Google Play" to {
-                    mainVm.openUrl(PLAY_STORE_URL)
+                "GKD-Aim Releases" to {
+                    mainVm.openUrl(RELEASES_URL)
                 },
             )
         )
@@ -380,7 +393,7 @@ private fun exportPlayTipTemplate(): AnnotatedString {
                 )
             )
         ) {
-            append("建议点此从官网下载")
+            append("建议点此从 GKD-Aim Releases 下载")
         }
         append("，或点击下方继续操作")
     }

@@ -6,10 +6,12 @@ const val IMPORT_SHORT_URL = "https://i.gkd.li/i/"
 const val SERVER_SCRIPT_URL =
     "https://registry.npmmirror.com/@gkd-kit/config/latest/files/dist/server.js"
 
-const val REPOSITORY_URL = "https://github.com/gkd-kit/gkd"
+const val REPOSITORY_URL = "https://github.com/AngryDisk/GKD-Aim"
 const val ISSUES_URL = "${REPOSITORY_URL}/issues"
+const val RELEASES_URL = "${REPOSITORY_URL}/releases"
+const val LATEST_RELEASE_URL = RELEASES_URL
 
-const val HOME_PAGE_URL = "https://gkd.li"
+const val HOME_PAGE_URL = REPOSITORY_URL
 
 const val LOCAL_SUBS_ID = -2L
 const val LOCAL_HTTP_SUBS_ID = -1L
@@ -27,7 +29,7 @@ object ShortUrlSet {
     const val URL10 = "https://gkd.li?r=10"
     const val URL11 = "https://gkd.li?r=11"
     const val URL12 = "https://gkd.li?r=12"
-    const val URL13 = "https://gkd.li?r=13"
+    const val URL13 = LATEST_RELEASE_URL
     const val URL14 = "https://gkd.li?r=14"
     const val URL15 = "https://gkd.li?r=15"
 }
